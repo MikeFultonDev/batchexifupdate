@@ -1,0 +1,12 @@
+#Format: tab delimited fields (file names may have spaces)
+#  <Zip of input files> <location file> <date stamp in yyyy:mm:dd> <time stamp in hh:mm:ss> <Shared Apple Photo Album>
+#   -or-
+#  <jpg file> <location file> <date stamp> <time stamp> <Shared Apple Photo Album>
+#  Note: files are relative to <this> file.
+#  Expected directory structure: 
+#    albums
+#    singles
+#    locations
+sahara.zip	SaharaDesert.loc	1932:06:20	12:37:00	Sahara
+arctic.zip	ArcticCircle.loc	1936:01:03	16:22:00	Arctic
+Cold.jpg	ArcticCircle.loc	1935:06:04	18:22:00	Arctic
