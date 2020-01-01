@@ -1,0 +1,12 @@
+#!/bin/sh
+#set -x
+datetime=$1
+dir=$2
+
+touchdate=`echo ${datetime} | awk -F '[: ]' ' { print $1$2$3 }'`
+touchtime=`echo ${datetime} | awk -F '[: ]' ' { print $4$5"."$6 }'`
+
+touchdatetime="${touchdate}${touchtime}"
+
+exiftool -overwrite_original -DateTimeOriginal="${datetime}" "${dir}"
+touch -t "${touchdatetime}" "${dir}"/*
