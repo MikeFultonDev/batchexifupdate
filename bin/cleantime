@@ -1,0 +1,60 @@
+#!/bin/sh
+#set -x
+ROOT=~/Downloads/tmpgoogle
+BOGUS_DATES='2007:10:06 2006:12:07 2006:12:11 2006:12:02'
+for d in "${ROOT}/"*; do
+	echo "Process directory: ${d}"
+	bogusfiles=""
+	allbogus=true
+	for f in "${d}/"*; do
+		datetime=`exiftool -S -s -DateTimeOriginal "${f}"`
+		date=`echo ${datetime} | awk ' { print $1 }'`
+		isbogus=false
+		for bogus in ${BOGUS_DATES}; do
+			if [ "${date}" = "${bogus}" ]; then
+				time=`echo ${datetime} | awk ' { print $2 }'`
+				isbogus=true
+				break
+			fi
+		done
+		if [ "${date}" = "" ]; then
+			isbogus=true
+		fi
+		touchdate=`echo ${datetime} | awk -F '[: ]' ' { print $1$2$3 }'`
+		touchtime=`echo ${datetime} | awk -F '[: ]' ' { print $4$5"."$6 }'`
+		if ${isbogus} ; then
+			if [ "${bogusfiles}" = '' ]; then
+				bogusfiles="${f}"
+			else
+				bogusfiles="${bogusfiles}\n${f}"
+			fi
+		else 
+			touch -t "${touchdate}${touchtime}" "${f}" 
+			if [ $? -gt 0 ]; then
+				echo "Unable to touch file ${f} with date/time: ${touchdate}${touchtime}"
+				exit 8
+			fi
+			lastdatetime="${datetime}"
+			lasttouchdate="${touchdate}"
+			lasttouchtime="${touchtime}"
+			allbogus=false
+		fi
+	done
+	if ${allbogus} ; then
+		echo "All files in ${d} have bogus dates. Setting to January 1st 2020"
+		touch -t "202001010101.01" "${d}"/*
+		exiftool -overwrite_original -DateTimeOriginal='2020:01:01 01:01:01' "${d}"/*
+	else
+		if [ "${bogusfiles}" = "" ]; then
+			echo "All files in ${d} have reasonable dates."
+		else 
+			echo "Some files in ${d} have bogus dates. Setting to last reasonable date found: ${lastdatetime}"
+			echo "${bogusfiles}" | while read bogusfile; do
+				touch -t "${lasttouchdate}${lasttouchtime}" "${bogusfile}"
+				exiftool -overwrite_original -DateTimeOriginal="${lastdatetime}" "${bogusfile}"
+			done
+		fi
+	fi
+done
+		
+
