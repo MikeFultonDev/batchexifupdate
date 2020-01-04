@@ -42,7 +42,7 @@ def processAlbumDir(googledir, outdir, picloc):
 
 	rc=runpgm(args)
 	if (rc != 0):
-		printerr("Unable to set location for: " + zipname);
+		printerr("Unable to set location for location: " + loc + " at: " + tempdir);
 		return rc
 
 	for item in os.listdir(tempdir):

@@ -4,6 +4,9 @@ import json
 import sys
 import os
 
+def printerr(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 if (len(sys.argv) != 2):
 	print("Expected a single location to be passed in to print geographic location for")
 	sys.exit(16)
@@ -16,7 +19,7 @@ mapapi="https://maps.googleapis.com/maps/api/geocode/json"
 try:
 	API_KEY=os.environ['API_KEY']
 except KeyError:
-	print("You need to set the API_KEY environment variable to your google API key")
+	printerr("You need to set the API_KEY environment variable to your google API key")
 	sys.exit(32)
 
 with urllib.request.urlopen(mapapi + "?address=" + loc + "&key=" + API_KEY) as response:
@@ -25,7 +28,7 @@ with urllib.request.urlopen(mapapi + "?address=" + loc + "&key=" + API_KEY) as r
 dict = json.loads(payload)
 results = dict['results']
 if (len(results) != 1):
-	print("Expected exactly one result for <" + loc + "> but got " + str(len(results)) + " results.")
+	printerr("Expected exactly one result for <" + loc + "> but got " + str(len(results)) + " results.")
 	sys.exit(16)
 
 first=results[0]
