@@ -13,6 +13,7 @@ def printerr(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 def runpgm(args):
+#	print(args);
 	pgm = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
 	stderr = pgm.stderr.readlines()
 	for line in pgm.stderr:
@@ -28,25 +29,24 @@ def runpgm(args):
 #  -copy the directory of pictures to the temporary directory
 #  -Run exiftool on the directory of files to set the location
 #  -Copy the pictures to the output directory
-def processAlbumDir(googledir, outdir, picloc):
-	tempdir = tempfile.mkdtemp()
+def processAlbumDir(googledir, fixdir, outdir, picloc):
 	for item in os.listdir(googledir):
 		s = os.path.join(googledir, item)
 		if os.path.isfile(s):
-			d = os.path.join(tempdir, item)
+			d = os.path.join(fixdir, item)
 			shutil.copy2(s, d)
 
 	with open(picloc, 'r') as locfile:
 		loc = locfile.read().strip()
-	args = "exiftool -overwrite_original -Subject= -Keywords+='Curator:MikeFulton' " + loc + " " + tempdir
+	args = "exiftool -overwrite_original -Subject= -Keywords+='Curator:MikeFulton' " + loc + " '" + fixdir + "'"
 
 	rc=runpgm(args)
 	if (rc != 0):
-		printerr("Unable to set location for location: " + loc + " at: " + tempdir);
+		printerr("Unable to set location for location: " + loc + " at: " + fixdir);
 		return rc
 
-	for item in os.listdir(tempdir):
-		s = os.path.join(tempdir, item)
+	for item in os.listdir(fixdir):
+		s = os.path.join(fixdir, item)
 		if os.path.isfile(s):
 			d = os.path.join(outdir, item)
 			shutil.copy2(s, d)
@@ -69,12 +69,14 @@ def verifyAlbum(googledir,locdir,outdir,entry):
 			print("Location File: " + locationFile + " does not exist. No processing performed.")
 			return None
 
+	fixedDir = outdir + "/google/" + file
 	appleDir = outdir + "/" + appleAlbum
 
 	return { 
 		"dir" : picdir,
 		"loc" : locationFile, 
-		"out" : appleDir
+		"fixed" : fixedDir,
+		"apple" : appleDir
 	} 
 
 def main():
@@ -127,17 +129,23 @@ def main():
 		albums.append(album)
 
 	for album in albums:
-		if not(os.path.exists(album['out'])):
+		if not(os.path.exists(album['apple'])):
 			try:
-				os.makedirs(album['out'])
+				os.makedirs(album['apple'])
 			except PermissionError as e:
 				print(str(e))
-				print("Unable to create output directory: " + album['out'])
+				print("Unable to create output directory: " + album['apple'])
 				return 8
+		if not(os.path.exists(album['fixed'])):
+			try:
+				os.makedirs(album['fixed'])
+			except PermissionError as e:
+				print(str(e))
+				print("Unable to create output directory: " + album['fixed'])
 
 	for album in albums:
-		print("Writing: " + album['dir'] + " to: " + album['out']);
-		rc=processAlbumDir(album['dir'], album['out'], album['loc'])
+		print("Writing: " + album['dir'] + " to: " + album['fixed'] + " and then: " + album['apple']);
+		rc=processAlbumDir(album['dir'], album['fixed'], album['apple'], album['loc'])
 		if (rc != 0):
 			return rc
 
